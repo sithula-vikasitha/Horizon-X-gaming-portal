@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizon X - Ultimate Gaming</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body { 
+            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+            color: white; 
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .game-card { 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            position: relative;
+        }
+        .game-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        
+        .delete-btn {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(239, 68, 68, 0.9);
+            width: 30px; height: 30px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: 0.3s;
+        }
+        .game-card:hover .delete-btn { opacity: 1; }
+
+        .search-bar { transition: 0.3s; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .search-bar:focus-within { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+
+        .modal-enter { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <nav class="sticky top-0 z-50 glass p-4 mb-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-3xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                HORIZON <span class="text-white">X</span>
+            </h1>
+            
+            <div class="relative w-full md:w-96 search-bar rounded-full bg-slate-800/50 px-4 py-2 flex items-center">
+                <i class="fas fa-search text-slate-400 mr-3"></i>
+                <input type="text" id="searchInp" placeholder="Search games..." class="bg-transparent border-none outline-none w-full text-sm">
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 pb-20">
+        <div id="game-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+            <div class="col-span-full text-center py-20 text-slate-500">
+                <i class="fas fa-circle-notch fa-spin text-3xl mb-2"></i>
+                <p>Loading Awesome Games...</p>
+            </div>
+        </div>
+    </main>
+
+    <button onclick="openPassModal('upload')" class="fixed bottom-8 right-8 w-16 h-16 bg-blue-600 hover:bg-blue-500 rounded-2xl shadow-2xl transition-all hover:rotate-90 flex items-center justify-center text-2xl z-40">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <div id="passModal" class="fixed inset-0 bg-black/80 z-[60] hidden items-center justify-center p-4">
+        <div class="glass p-8 rounded-3xl w-full max-w-sm modal-enter">
+            <h3 class="text-xl font-bold mb-4 text-center">Admin Access</h3>
+            <input type="password" id="adminPass" placeholder="Enter Password" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 focus:border-blue-500 outline-none">
+            <div id="passError" class="text-red-400 text-sm mb-4 hidden text-center">Incorrect Password!</div>
+            <div class="flex gap-3">
+                <button onclick="closeModal('passModal')" class="flex-1 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition">Cancel</button>
+                <button onclick="verifyPassword()" class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 transition font-bold">Verify</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="fixed inset-0 bg-black/80 z-[60] hidden items-center justify-center p-4">
+        <div class="glass p-8 rounded-3xl w-full max-w-md modal-enter">
+            <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                <i class="fas fa-cloud-upload-alt text-blue-400"></i> Add New Game
+            </h3>
+            <input type="text" id="gameName" placeholder="Game Name" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 outline-none focus:border-blue-500 text-white">
+            <input type="text" id="gameLink" placeholder="Game URL (Link)" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 outline-none focus:border-blue-500 text-white">
+            
+            <label class="block mb-2 text-sm text-slate-400 px-1">Thumbnail Image</label>
+            <input type="file" id="gameImg" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 mb-6">
+            
+            <div class="flex gap-3">
+                <button onclick="closeModal('uploadModal')" class="flex-1 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition">Cancel</button>
+                <button onclick="uploadGame()" id="uploadBtn" class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 transition font-bold">Add Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDU2jIQbw-u-z_IkfQmkl4anbvy1t_fK5Q",
+            authDomain: "horizon-x-9cb0a.firebaseapp.com",
+            projectId: "horizon-x-9cb0a",
+            storageBucket: "horizon-x-9cb0a.firebasestorage.app",
+            messagingSenderId: "383113910220",
+            appId: "1:383113910220:web:9587109ac6b28e7b2caf69",
+            measurementId: "G-3W0R136W5B"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const imgbbAPI = "d36ce41a11592d8321d8ac55a3e60005";
+        
+        let currentMode = ""; // 'upload' or 'delete'
+        let pendingDeleteId = "";
+        let allGames = [];
+
+        // UI Helpers
+        window.closeModal = (id) => {
+            document.getElementById(id).style.display = 'none';
+            document.getElementById('adminPass').value = '';
+            document.getElementById('passError').classList.add('hidden');
+        };
+
+        window.openPassModal = (mode, id = "") => {
+            currentMode = mode;
+            pendingDeleteId = id;
+            document.getElementById('passModal').style.display = 'flex';
+        };
+
+        window.verifyPassword = () => {
+            const pass = document.getElementById('adminPass').value;
+            if(pass === "1111") {
+                closeModal('passModal');
+                if(currentMode === 'upload') document.getElementById('uploadModal').style.display = 'flex';
+                if(currentMode === 'delete') executeDelete();
+            } else {
+                document.getElementById('passError').classList.remove('hidden');
+            }
+        };
+
+        // Upload Logic
+        window.uploadGame = async () => {
+            const name = document.getElementById('gameName').value;
+            const link = document.getElementById('gameLink').value;
+            const img = document.getElementById('gameImg').files[0];
+            const btn = document.getElementById('uploadBtn');
+
+            if(!name || !link || !img) return;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+
+            try {
+                const formData = new FormData();
+                formData.append("image", img);
+                const res = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbAPI}`, { method: "POST", body: formData });
+                const data = await res.json();
+                
+                await addDoc(collection(db, "games"), {
+                    name, link, image: data.data.url, createdAt: Date.now()
+                });
+
+                closeModal('uploadModal');
+                resetForm();
+            } catch (e) { console.error(e); }
+            btn.disabled = false;
+            btn.innerHTML = "Add Game";
+        };
+
+        const executeDelete = async () => {
+            await deleteDoc(doc(db, "games", pendingDeleteId));
+        };
+
+        const resetForm = () => {
+            document.getElementById('gameName').value = '';
+            document.getElementById('gameLink').value = '';
+            document.getElementById('gameImg').value = '';
+        }
+
+        // Search & Realtime Load
+        const renderGames = (games) => {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = games.length ? '' : '<p class="col-span-full text-center text-slate-500">No games found.</p>';
+            
+            games.forEach(game => {
+                const card = document.createElement('div');
+                card.className = "game-card glass rounded-2xl overflow-hidden";
+                card.innerHTML = `
+                    <div class="relative group cursor-pointer" onclick="window.open('${game.link}', '_blank')">
+                        <img src="${game.image}" class="w-full h-36 object-cover bg-slate-800">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60"></div>
+                    </div>
+                    <div class="p-3">
+                        <h4 class="text-sm font-semibold truncate text-slate-100">${game.name}</h4>
+                    </div>
+                    <button onclick="openPassModal('delete', '${game.id}')" class="delete-btn">
+                        <i class="fas fa-trash-alt text-xs text-white"></i>
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        };
+
+        onSnapshot(query(collection(db, "games"), orderBy("createdAt", "desc")), (snap) => {
+            allGames = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderGames(allGames);
+        });
+
+        document.getElementById('searchInp').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allGames.filter(g => g.name.toLowerCase().includes(term));
+            renderGames(filtered);
+        });
+    </script>
+</body>
+</html>
